@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=­DLINUX ­ansi ­Wall ­D_GNU_SOURCE
+CFLAGS=­DLINUX ­ansi ­Wall ­D_GNU_SOURCE g
 CPPFLAGS=
 all:	shell
 shell:	shell.o

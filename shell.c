@@ -8,6 +8,8 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
+#define MAXLINE 80
+
 #define OK       0
 #define NO_INPUT 1
 #define TOO_LONG 2
@@ -35,13 +37,24 @@ int getLine(char *prompt, char *buff, size_t sz) {
 	return OK;
 }
 
+char *grow_arr(char *arr, size_t new_bytes)
+{
+    char *tmp = realloc(arr, new_bytes);
+    if (tmp != NULL) {
+        arr = tmp;
+        return arr;
+    } else {
+        perror("realloc error");
+    }
+}
+
 void clearScreen() {
 	// print several blank lines
 	for (int l=0; l<32; l++) {
-		fputs("\n",stdout);
+		fputs("\n", stdout);
 	}
 	for (int l=0; l<32; l++) {
-		fputs("\033[A\033[2K",stdout);
+		fputs("\033[A\033[2K", stdout);
 	}
 	// rewind(stdout);
 	// ftruncate(1,0);
@@ -51,13 +64,16 @@ int main(int argc, char *argv[])
 {
 	char prompt[] = "shell";
 	int rc;
-	char buff[255];
+	char buff[MAXLINE];
+	char *arg;
+	unsigned int argnum = 1;
+	char *args = malloc(sizeof(*args));
 	pid_t pid;
 	int status;
 	
 	strcat(strcat(prompt, (geteuid() == 0 ? "#" : "$")), " ");
 	
-	while (strncmp(buff, "exit", 4) != 0)
+	for (;;)
 	{
 		rc = getLine(prompt, buff, sizeof(buff));
 		
@@ -69,13 +85,26 @@ int main(int argc, char *argv[])
 			printf("Input too long [%s]\n", buff);
 		}
 		
-		if (strncmp(buff, "clear", 5) == 0) {
+		if (strlen(buff) == 5 && strncmp(buff, "clear", 5) == 0) {
 			clearScreen();
-		} else if (strncmp(buff, "exit", 4) == 0) {
-			fputs("\n",stdout);
+		} else if (strlen(buff) == 4 && strncmp(buff, "exit", 4) == 0) {
+			fputs("exit\n",stdout);
 			exit(0);
+		} else if (strlen(buff) == 0) {
+			// printf("no command entered\n");
 		} else {
-			printf("command: %s\n", buff);
+			// printf("command: %s\n", buff);
+			
+			/*
+			while ((arg = strtok(buff, " ")) != NULL)
+			{
+				++argnum;
+				args = grow_arr(args, sizeof(*args) * argnum);
+				args[argnum] = *arg;
+			}
+			
+			printf("argnum: %u\n", argnum);
+			*/
 			
 			/**
 			 * pid_t fork() spawns a new child process which is a clone of its parent
@@ -89,15 +118,14 @@ int main(int argc, char *argv[])
 			
 			if (pid == 0) {
 				/*** child ***/
-				puts("Hello world!\n");
-				// execlp(buf, buf, (char *)0);
-				// printf("Couldn't execute: %s", buf);
+				execlp(buff, buff, (char *)0);
+				printf("Couldn't execute: %s\n", buff);
 				exit(127);
 			} else {
 				/*** parent ***/
 				if ((pid = waitpid(pid, &status, 0)) < 0)
 					perror("waitpid");
-				printf("%% ");
+				// printf("%% ");
 			}
 		}
 	}
