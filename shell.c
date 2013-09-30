@@ -119,6 +119,7 @@ int main(int argc, char *argv[])
 			if (pid == 0) {
 				/*** child ***/
 				execlp(buff, buff, (char *)0);
+				// execvp(args[0], args);
 				printf("Couldn't execute: %s\n", buff);
 				exit(127);
 			} else {
