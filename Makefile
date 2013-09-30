@@ -1,10 +1,14 @@
 CC=gcc
 CFLAGS=­DLINUX ­ansi ­Wall ­D_GNU_SOURCE g
 CPPFLAGS=
-all:	shell
-shell:	shell.o
-	$(CC) -o shell shell.o
-shell.o:	shell.c
-	$(CC) -std=c99 -c shell.c
+BIN=shell
+ODIR=build
+all:	$(ODIR)/$(BIN)
+$(ODIR):
+	mkdir $(ODIR)
+$(ODIR)/$(BIN):	$(ODIR)/$(BIN).o
+	$(CC) -o $(ODIR)/$(BIN) $(ODIR)/$(BIN).o
+$(ODIR)/$(BIN).o:	$(BIN).c $(ODIR)
+	$(CC) -std=c99 -c -o $(ODIR)/$(BIN).o $(BIN).c
 clean:	
-	rm -f shell shell.o
+	rm -fr $(ODIR)/
