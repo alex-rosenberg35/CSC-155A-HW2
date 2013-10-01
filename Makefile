@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=­DLINUX ­ansi ­Wall ­D_GNU_SOURCE g
+CFLAGS=­DLINUX ­ansi ­Wall ­D_GNU_SOURCE # g
 CPPFLAGS=
 BIN=shell
 ODIR=build

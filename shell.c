@@ -9,7 +9,7 @@
 #include <sys/types.h>
 
 #define MAXLINE 80
-
+// #define DEBUG 1
 #define OK       0
 #define NO_INPUT 1
 #define TOO_LONG 2
@@ -37,9 +37,17 @@ int getLine(char *prompt, char *buff, size_t sz) {
 	return OK;
 }
 
-char *grow_arr(char *arr, size_t new_bytes)
+char **grow_arr(char **arr, size_t new_bytes)
 {
-    char *tmp = realloc(arr, new_bytes);
+	#ifdef DEBUG
+	printf("new_bytes: %d\n", new_bytes);
+	for (int c=0; c<(new_bytes/sizeof(char*)); c++)
+	{
+		printf("%d: %s\n", c, arr[c]);
+	}
+	#endif
+	
+    char **tmp = realloc(arr, new_bytes);
     if (tmp != NULL) {
         arr = tmp;
         return arr;
@@ -66,8 +74,8 @@ int main(int argc, char *argv[])
 	int rc;
 	char buff[MAXLINE];
 	char *arg;
-	unsigned int argnum = 1;
-	char *args = malloc(sizeof(*args));
+	unsigned int argnum;
+	char **args = malloc(sizeof(char*));
 	pid_t pid;
 	int status;
 	
@@ -75,6 +83,7 @@ int main(int argc, char *argv[])
 	
 	for (;;)
 	{
+		argnum = 0;
 		rc = getLine(prompt, buff, sizeof(buff));
 		
 		if (rc == NO_INPUT) {
@@ -95,16 +104,26 @@ int main(int argc, char *argv[])
 		} else {
 			// printf("command: %s\n", buff);
 			
-			/*
-			while ((arg = strtok(buff, " ")) != NULL)
+			if (buff[strlen(buff)-1] == '\n')
+            	buff[strlen(buff)-1] = 0;  /* replace newline with null */
+            
+			while ((arg = strtok(arg == NULL ? buff : NULL, " ")) != NULL)
 			{
-				++argnum;
-				args = grow_arr(args, sizeof(*args) * argnum);
-				args[argnum] = *arg;
+				args = grow_arr(args, sizeof(char *) * (argnum+1));
+				args[argnum++] = arg;
 			}
 			
+			if (argnum == 0) {
+				args[argnum++] = buff;
+			}
+			
+			#ifdef DEBUG
+			for (int c=0; c<(sizeof(*args)/sizeof(char *)); c++)
+			{
+				printf("%d: %s\n", c, args[c]);
+			}
 			printf("argnum: %u\n", argnum);
-			*/
+			#endif
 			
 			/**
 			 * pid_t fork() spawns a new child process which is a clone of its parent
@@ -118,8 +137,8 @@ int main(int argc, char *argv[])
 			
 			if (pid == 0) {
 				/*** child ***/
-				execlp(buff, buff, (char *)0);
-				// execvp(args[0], args);
+				// execlp(buff, buff, (char *)0);
+				execvp(args[0], args);
 				printf("Couldn't execute: %s\n", buff);
 				exit(127);
 			} else {
